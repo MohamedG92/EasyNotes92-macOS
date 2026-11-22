@@ -321,7 +321,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         pathPill.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) { openContainingFolder(); }
         });
-        search.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Rechercher dans la note…  (Ctrl+F)");
+        search.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, Platform.label("Rechercher dans la note…  (Ctrl+F)"));
         search.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, new Glyph(Glyph.Kind.SEARCH, 15));
         search.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
         JPanel searchNav = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -370,11 +370,11 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         menuBar.setOpaque(false);
         menuRow.add(menuBar, BorderLayout.WEST);
         quickButtons.setOpaque(false);
-        quickButtons.add(quick("B", Font.BOLD, "Gras (Ctrl+B)", () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Bold))));
-        quickButtons.add(quick("I", Font.ITALIC, "Italique (Ctrl+I)", () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Italic))));
-        quickButtons.add(quick("U", Font.PLAIN, "Souligné (Ctrl+U)", () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Underline))));
+        quickButtons.add(quick("B", Font.BOLD, Platform.label("Gras (Ctrl+B)"), () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Bold))));
+        quickButtons.add(quick("I", Font.ITALIC, Platform.label("Italique (Ctrl+I)"), () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Italic))));
+        quickButtons.add(quick("U", Font.PLAIN, Platform.label("Souligné (Ctrl+U)"), () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Underline))));
         JButton color = new JButton(new Glyph(Glyph.Kind.PALETTE, 16));
-        styleQuick(color, "Couleur du texte (Ctrl+Shift+C)");
+        styleQuick(color, Platform.label("Couleur du texte (Ctrl+Shift+C)"));
         color.addActionListener(e -> chooseColor());
         quickButtons.add(color);
         quickButtons.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
@@ -411,7 +411,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         int searchW = pathPill.isVisible() ? Math.max(220, Math.min(380, (int) (w * 0.38))) : Math.max(160, w - 40);
         search.setPreferredSize(new Dimension(searchW, 34));
         search.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT,
-                w >= 760 ? "Rechercher dans la note…  (Ctrl+F)" : "Rechercher…");
+                w >= 760 ? Platform.label("Rechercher dans la note…  (Ctrl+F)") : "Rechercher…");
         countLabel.setVisible(w >= 700);
         eolLabel.setVisible(w >= 820);
         encLabel.setVisible(w >= 560);
@@ -676,7 +676,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         addCtx("Italic", () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Italic)));
         addCtx("Underline", () -> withEditor(ed -> ed.toggleStyle(StyleConstants.Underline)));
         addCtx("Text Color...", this::chooseColor);
-        addCtx("Bloc de code (Ctrl+Shift+K)", () -> withEditor(NoteEditor::toggleCodeBlock));
+        addCtx(Platform.label("Bloc de code (Ctrl+Shift+K)"), () -> withEditor(NoteEditor::toggleCodeBlock));
         contextMenu.addSeparator();
         addCtx("Duplicate Line Down", () -> withEditor(ed -> ed.duplicateLines(false)));
     }
@@ -825,7 +825,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         String[][] rows = {
             {"color.equals", "Lignes =====", "les séparateurs ==+ et les lignes des chapitres"},
             {"color.stars", "Lignes ***** et les *", "les séparateurs *+ et chaque * dans tes notes"},
-            {"color.code", "Texte du code", "le code collé depuis un IDE (Ctrl+Shift+K)"},
+            {"color.code", "Texte du code", Platform.label("le code collé depuis un IDE (Ctrl+Shift+K)")},
             {"color.codeBg", "Fond des blocs de code", "la carte derrière le code"},
             {"color.syn.keyword", "Mots-clés", "public, class, def, return, if ..."},
             {"color.syn.operator", "Opérateurs", "= + - / < > ! & | ; (dans tes notes et le code)"},

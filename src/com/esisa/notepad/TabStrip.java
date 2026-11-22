@@ -65,7 +65,7 @@ final class TabStrip extends JPanel {
         setOpaque(false);
         putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, true); // empty space drags the window
         plus = new JButton(new Glyph(Glyph.Kind.PLUS, 16));
-        plus.setToolTipText("Nouvel onglet (Ctrl+N)");
+        plus.setToolTipText(Platform.label("Nouvel onglet (Ctrl+N)"));
         plus.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
         plus.putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, false);
         plus.setFocusable(false);

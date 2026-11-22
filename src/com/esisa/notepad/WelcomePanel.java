@@ -62,7 +62,7 @@ final class WelcomePanel extends JPanel implements javax.swing.Scrollable {
         column.add(Box.createVerticalStrut(26));
 
         normalCard = new Card(new LangIcon(Language.TEXT, 34), "Normal .txt",
-                "Un fichier texte simple, comme le Notepad de Windows", () -> choice.chosen(false, Language.TEXT));
+                Platform.MAC ? "Un fichier texte simple, comme TextEdit" : "Un fichier texte simple, comme le Notepad de Windows", () -> choice.chosen(false, Language.TEXT));
         normalCard.setAlignmentX(LEFT_ALIGNMENT);
         normalCard.setMaximumSize(new Dimension(MAX_W, 86));
         column.add(normalCard);
