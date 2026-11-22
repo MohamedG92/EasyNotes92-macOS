@@ -52,6 +52,22 @@ jobs:
           if kill -0 $APP 2>/dev/null; then echo "App is running"; kill $APP; else echo "App exited early:"; cat smoke/log.txt; exit 1; fi
           cat smoke/log.txt
 
+      - name: Save the screenshot on the "screenshots" branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          [ -f "smoke/screenshot-${{ matrix.arch }}.png" ] || exit 0
+          cp "smoke/screenshot-${{ matrix.arch }}.png" /tmp/shot.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for try in 1 2 3; do
+            git fetch origin screenshots 2>/dev/null && git checkout -B screenshots origin/screenshots || git checkout --orphan screenshots
+            git rm -rfq --cached . >/dev/null 2>&1 || true
+            cp /tmp/shot.png "screenshot-${{ matrix.arch }}.png"
+            git add "screenshot-${{ matrix.arch }}.png"
+            git commit -qm "CI screenshot (${{ matrix.arch }})" && git push origin screenshots && break
+            sleep 5
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: EasyNotes92-macos-${{ matrix.arch }}
