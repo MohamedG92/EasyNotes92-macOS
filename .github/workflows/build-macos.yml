@@ -23,6 +23,7 @@ jobs:
           - runner: macos-15-intel     # Intel Macs
             arch: x64
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -42,13 +43,17 @@ jobs:
           mv build/EasyNotes92-*.dmg "build/EasyNotes92-${VERSION}-macos-${{ matrix.arch }}.dmg"
 
       - name: Smoke test (start the app, take a screenshot)
+        timeout-minutes: 3
         run: |
           CP="build/classes:lib/flatlaf-3.7.1.jar:lib/flatlaf-intellij-themes-3.7.1.jar"
           mkdir -p smoke
           java -Deasynotes.dir="$PWD/smoke/settings" -cp "$CP" com.esisa.notepad.Main > smoke/log.txt 2>&1 &
           APP=$!
           sleep 20
-          screencapture -x "smoke/screenshot-${{ matrix.arch }}.png" || echo "screencapture not allowed on this runner"
+          # screencapture can hang on some runners: give it 20 s at most
+          ( screencapture -x "smoke/screenshot-${{ matrix.arch }}.png" ) & SHOT=$!
+          for i in $(seq 1 20); do kill -0 $SHOT 2>/dev/null || break; sleep 1; done
+          kill -9 $SHOT 2>/dev/null && echo "screencapture timed out (no screenshot this time)" || true
           if kill -0 $APP 2>/dev/null; then echo "App is running"; kill $APP; else echo "App exited early:"; cat smoke/log.txt; exit 1; fi
           cat smoke/log.txt
 
