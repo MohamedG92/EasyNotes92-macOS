@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
-/** Everything remembered between runs, in %APPDATA%\EasyNotes92\settings.properties. */
+/** Everything remembered between runs: %APPDATA%\EasyNotes92 (Windows), ~/Library/Application Support/EasyNotes92 (macOS). */
 final class Settings {
 
     static final int MAX_RECENT = 15;
@@ -34,8 +34,7 @@ final class Settings {
     Settings() {
         String appData = System.getenv("APPDATA");
         String override = System.getProperty("easynotes.dir"); // used by the tests
-        dir = override != null ? Path.of(override)
-                : Path.of(appData != null ? appData : System.getProperty("user.home"), "EasyNotes92");
+        dir = override != null ? Path.of(override) : Platform.appDataDir().resolve("EasyNotes92");
         sessionDir = dir.resolve("session");
         file = dir.resolve("settings.properties");
         try {

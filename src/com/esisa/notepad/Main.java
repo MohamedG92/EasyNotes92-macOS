@@ -13,6 +13,7 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     public static void main(String[] args) {
+        Platform.beforeUi();
         Settings settings = new Settings();
         boolean ownsSession = settings.acquireSessionLock();
         if (!ownsSession && SingleInstance.sendToRunning(settings.dir, args)) {
@@ -23,6 +24,7 @@ public class Main {
             AppFrame frame = new AppFrame(settings, ownsSession);
             frame.setVisible(true);
             for (String a : args) frame.openFile(new File(a));
+            MacIntegration.install(frame);
             if (ownsSession) {
                 SingleInstance.listen(settings.dir, files -> SwingUtilities.invokeLater(() -> {
                     frame.bringToFront();

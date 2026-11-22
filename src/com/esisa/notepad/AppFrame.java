@@ -240,7 +240,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
     private static String defaultFontFamily() {
         Set<String> fams = new HashSet<>(Arrays.asList(
                 GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
-        return fams.contains("Cascadia Code") ? "Cascadia Code" : fams.contains("Consolas") ? "Consolas" : Font.MONOSPACED;
+        return Platform.monoFont(fams);
     }
 
     NoteEditor editor() {
@@ -268,8 +268,15 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
     private void buildHeader() {
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
 
-        boolean inTitleBar = FlatLaf.supportsNativeWindowDecorations();
-        if (inTitleBar) getRootPane().putClientProperty(FlatClientProperties.FULL_WINDOW_CONTENT, true);
+        boolean inTitleBar = FlatLaf.supportsNativeWindowDecorations() || Platform.MAC;
+        if (Platform.MAC) {
+            // tabs drawn in the title bar, next to the red/yellow/green buttons
+            getRootPane().putClientProperty("apple.awt.fullWindowContent", true);
+            getRootPane().putClientProperty("apple.awt.transparentTitleBar", true);
+            getRootPane().putClientProperty("apple.awt.windowTitleVisible", false);
+        } else if (inTitleBar) {
+            getRootPane().putClientProperty(FlatClientProperties.FULL_WINDOW_CONTENT, true);
+        }
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         left.setOpaque(false);
@@ -287,12 +294,24 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
 
         JPanel buttonsPlaceholder = new JPanel();
         buttonsPlaceholder.setOpaque(false);
-        if (inTitleBar) buttonsPlaceholder.putClientProperty(FlatClientProperties.FULL_WINDOW_CONTENT_BUTTONS_PLACEHOLDER, "win");
+        if (inTitleBar) buttonsPlaceholder.putClientProperty(FlatClientProperties.FULL_WINDOW_CONTENT_BUTTONS_PLACEHOLDER,
+                Platform.MAC ? "mac" : "win");
         else buttonsPlaceholder.setPreferredSize(new Dimension(8, 8));
 
-        titleRow.add(left, BorderLayout.WEST);
-        titleRow.add(strip, BorderLayout.CENTER);
-        titleRow.add(buttonsPlaceholder, BorderLayout.EAST);
+        if (Platform.MAC) {
+            // macOS: window buttons on the left, before the app icon
+            JPanel west = new JPanel(new BorderLayout());
+            west.setOpaque(false);
+            west.add(buttonsPlaceholder, BorderLayout.WEST);
+            west.add(left, BorderLayout.CENTER);
+            west.putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, true);
+            titleRow.add(west, BorderLayout.WEST);
+            titleRow.add(strip, BorderLayout.CENTER);
+        } else {
+            titleRow.add(left, BorderLayout.WEST);
+            titleRow.add(strip, BorderLayout.CENTER);
+            titleRow.add(buttonsPlaceholder, BorderLayout.EAST);
+        }
         titleRow.putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, true);
         titleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, TabStrip.HEIGHT));
 
@@ -504,7 +523,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
                 () -> withEditor(ed -> ed.replaceSelection(NoteAssist.STARS_LINE)));
         item(format, "Ligne de ***** longue  (tape **+)", null,
                 () -> withEditor(ed -> ed.replaceSelection(NoteAssist.LONG_STARS_LINE)));
-        item(format, "Nouveau chapitre        (new titre + Ctrl+Espace)", null, () -> withEditor(this::newChapterHere));
+        item(format, "Nouveau chapitre        (new titre + " + (Platform.MAC ? "⌃Espace" : "Ctrl+Espace") + ")", null, () -> withEditor(this::newChapterHere));
         format.addSeparator();
         item(format, "Font...", null, this::chooseFont);
 
@@ -559,14 +578,18 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
 
         JMenu help = menu("Help", 'H');
         item(help, "Raccourcis clavier", "F1", this::showShortcuts);
-        item(help, "About " + APP, null, () -> JOptionPane.showMessageDialog(this,
+        item(help, "About " + APP, null, this::showAbout);
+    }
+
+    void showAbout() {
+        JOptionPane.showMessageDialog(this,
                 APP + " — bloc-notes pour la prise de note\n\n"
                         + "Créé par Mohamed Iraqi Houssaini\n"
                         + "Copyright © 2026 Mohamed Iraqi Houssaini\n\n"
                         + "Logiciel gratuit, sous licence PolyForm Noncommercial 1.0.0 :\n"
                         + "vous pouvez le modifier et le partager, mais jamais le vendre.\n\n"
                         + "Java Swing + FlatLaf (Apache 2.0)\n\nFichiers de session : " + settings.dir,
-                "About", JOptionPane.INFORMATION_MESSAGE, new javax.swing.ImageIcon(AppIcon.render(64))));
+                "About", JOptionPane.INFORMATION_MESSAGE, new javax.swing.ImageIcon(AppIcon.render(64)));
     }
 
     private JMenu menu(String name, char mnemonic) {
@@ -580,7 +603,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         JMenuItem it = new JMenuItem(text);
         it.addActionListener(e -> action.run());
         if (key != null) {
-            KeyStroke ks = KeyStroke.getKeyStroke(key);
+            KeyStroke ks = KeyStroke.getKeyStroke(Platform.key(key));
             it.setAccelerator(ks);
             shortcuts.add(new Object[] {ks, action});
         }
@@ -604,7 +627,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
             if (!(upKey || downKey) || !ed.isEditable()) return false;
             if (mods == java.awt.event.InputEvent.ALT_DOWN_MASK) {
                 ed.moveLines(upKey);
-            } else if (mods == (java.awt.event.InputEvent.ALT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK)) {
+            } else if (mods == (java.awt.event.InputEvent.ALT_DOWN_MASK | Platform.MENU_MASK)) {
                 ed.duplicateLines(upKey);
             } else {
                 return false;
@@ -616,6 +639,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
 
     /** A shortcut without a menu item (alternative keys). */
     private void extra(String key, Runnable action) {
+        key = Platform.key(key);
         KeyStroke ks = KeyStroke.getKeyStroke(key);
         shortcuts.add(new Object[] {ks, action});
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ks, "extra:" + key);
@@ -962,7 +986,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         sp.getViewport().setBackground(Ui.surface());
         // no fixed step here: the editor decides (half a line per step, see NoteEditor.getScrollableUnitIncrement)
         ed.addMouseWheelListener(e -> {
-            if (e.isControlDown()) {
+            if ((e.getModifiersEx() & Platform.MENU_MASK) != 0) {
                 setZoom(zoom + (e.getWheelRotation() < 0 ? 10 : -10));
             } else {
                 sp.dispatchEvent((MouseWheelEvent) SwingUtilities.convertMouseEvent(ed, e, sp));
@@ -1056,11 +1080,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
     private void openContainingFolder() {
         NoteEditor ed = editor();
         if (ed == null || ed.file == null) return;
-        try {
-            new ProcessBuilder("explorer.exe", "/select,", ed.file.getAbsolutePath()).start();
-        } catch (IOException e) {
-            try { Desktop.getDesktop().open(ed.file.getParentFile()); } catch (IOException ignored) { /* no shell */ }
-        }
+        Platform.reveal(ed.file);
     }
 
     /** Rounded "path" bar of row 2. */
@@ -1421,6 +1441,7 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
     }
 
     private static String row(String keys, String what) {
+        keys = Platform.label(keys);
         return "<tr><td><b>" + keys.replace("<", "&lt;") + "</b></td><td>&nbsp;&nbsp;" + what + "</td></tr>";
     }
 
@@ -1434,7 +1455,8 @@ public final class AppFrame extends JFrame implements NoteEditor.Host {
         File desktop = FileSystemView.getFileSystemView().getHomeDirectory();
         File home = new File(System.getProperty("user.home"));
         for (File f : new File[] {new File(desktop, "la_prise_de_note"),
-                new File(home, "OneDrive\\Desktop\\la_prise_de_note"), new File(home, "Desktop\\la_prise_de_note")}) {
+                new File(new File(new File(home, "OneDrive"), "Desktop"), "la_prise_de_note"),
+                new File(new File(home, "Desktop"), "la_prise_de_note")}) {
             if (f.isDirectory()) return f;
         }
         return null;

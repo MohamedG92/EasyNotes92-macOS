@@ -144,7 +144,13 @@ final class NoteAssist {
         boolean plain = (mods & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK
                 | KeyEvent.SHIFT_DOWN_MASK | KeyEvent.META_DOWN_MASK)) == 0;
 
-        if (code == KeyEvent.VK_SPACE && ctrl && (mods & (KeyEvent.ALT_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK)) == 0) {
+        boolean alt = (mods & KeyEvent.ALT_DOWN_MASK) != 0;
+        boolean meta = (mods & KeyEvent.META_DOWN_MASK) != 0;
+        boolean shift = (mods & KeyEvent.SHIFT_DOWN_MASK) != 0;
+        // Ctrl+Space everywhere; on macOS also Option+Space (Ctrl+Space may switch the keyboard input source there)
+        boolean suggestKey = code == KeyEvent.VK_SPACE && !shift && !meta
+                && ((ctrl && !alt) || (Platform.MAC && alt && !ctrl));
+        if (suggestKey) {
             showPopup();
             e.consume();
             return;

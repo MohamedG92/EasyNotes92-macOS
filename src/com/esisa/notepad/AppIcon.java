@@ -70,6 +70,7 @@ final class AppIcon {
     /** Writes a multi-size .ico (PNG-compressed entries, supported since Windows Vista). */
     public static void main(String[] args) throws IOException {
         if (args.length == 2 && args[0].equals("--store-assets")) { storeAssets(Path.of(args[1])); return; }
+        if (args.length == 2 && args[0].equals("--iconset")) { iconset(Path.of(args[1])); return; }
         int[] sizes = {16, 24, 32, 48, 64, 128, 256};
         List<byte[]> pngs = new ArrayList<>();
         for (int s : sizes) {
@@ -92,6 +93,27 @@ final class AppIcon {
             for (byte[] png : pngs) out.write(png);
         }
         System.out.println("icon written: " + target.toAbsolutePath());
+    }
+
+    /**
+     * macOS icon set (dir must end in .iconset): build-mac.sh turns it into EasyNotes92.icns with iconutil.
+     * macOS icons keep a margin around the tile (about 10% each side), like Apple's own icons.
+     */
+    static void iconset(Path dir) throws IOException {
+        Files.createDirectories(dir);
+        for (int base : new int[] {16, 32, 128, 256, 512}) {
+            for (int scale : new int[] {1, 2}) {
+                int px = base * scale;
+                BufferedImage img = new BufferedImage(px, px, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = img.createGraphics();
+                int tile = Math.round(px * 0.8f), off = (px - tile) / 2;
+                g.drawImage(render(tile), off, off, null);
+                g.dispose();
+                String name = "icon_" + base + "x" + base + (scale == 2 ? "@2x" : "") + ".png";
+                ImageIO.write(img, "png", dir.resolve(name).toFile());
+            }
+        }
+        System.out.println("iconset written: " + dir.toAbsolutePath());
     }
 
     /** PNG logos for the MSIX package (Microsoft Store), written into dir. */

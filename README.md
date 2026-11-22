@@ -1,4 +1,42 @@
-# EasyNotes92
+# EasyNotes92 for macOS 🍎
+
+> The **macOS version** of [EasyNotes92](https://github.com/MohamedG92/EasyNotes92).
+> Same app, same notes, built for Mac: **Cmd** shortcuts, window buttons on the left,
+> settings in `~/Library/Application Support`, Finder integration, and a `.dmg` built automatically by GitHub Actions.
+> The same code still runs on Windows.
+
+## Download (macOS)
+
+Get the `.dmg` for your Mac from the [**Releases**](../../releases) page:
+- **Apple Silicon** (M1, M2, M3, M4): `EasyNotes92-…-macos-arm64.dmg`
+- **Intel Macs**: `EasyNotes92-…-macos-x64.dmg`
+
+Open the `.dmg` and drag **EasyNotes92** into **Applications**.
+
+**First launch:** the app isn't signed by Apple yet (that needs a paid Apple Developer account), so macOS
+says it "cannot verify the developer". Open it once like this:
+1. Double-click EasyNotes92, then click **Done** (or **Cancel**) on the warning.
+2. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to EasyNotes92.
+3. Confirm. From then on it opens normally.
+
+## Mac shortcuts
+
+| Windows | macOS | Does |
+|---|---|---|
+| Ctrl + key | **⌘ + key** | every menu shortcut (⌘S save, ⌘N new tab, ⌘F search, ⌘B bold…) |
+| Ctrl+Space | **⌃Space** or **⌥Space** | suggestions / `new title` → chapter (⌥Space if ⌃Space switches your keyboard language) |
+| Ctrl+Alt+↑/↓ | **⌘⌥↑/↓** | duplicate line |
+| Alt+↑/↓ | **⌥↑/↓** | move line |
+| Ctrl+D | **⌘D** | delete line |
+| Alt+A | **⌘L** | select line |
+| Ctrl+H | **⌘⌥F** | replace |
+| F5 | **⌘⇧D** | insert time and date |
+| Ctrl+Tab | **⌃Tab** | next tab |
+| Ctrl+wheel | **⌘+wheel** | zoom |
+
+Help → *Raccourcis clavier* shows the Mac keys automatically.
+
+---
 
 A dark, tabbed notepad for **taking course notes** ("prise de note") while you code.
 It looks and behaves like the Windows 11 Notepad, plus shortcuts made for notes:
@@ -63,6 +101,9 @@ Written in **Java 25 / Swing** with **[FlatLaf](https://www.formdev.com/flatlaf/
 Requirements: **JDK 25 or newer** (`javac`, `jar`, `jpackage` on the PATH).
 
 ```powershell
+# macOS: builds build/EasyNotes92-1.0.0.dmg (needs JDK 25+)
+./build-mac.sh
+
 # Windows: builds EasyNotes92.exe (with its own Java inside) + a Desktop shortcut
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
@@ -92,6 +133,8 @@ src/com/esisa/notepad/
   Theme.java             the 26 themes (Night Blue + FlatLaf theme pack)
   Settings.java          everything remembered between runs
   SingleInstance.java    hands a second launch over to the open window (localhost + token)
+  Platform.java          everything that differs between Windows and macOS (keys, folders, font, Finder)
+  MacIntegration.java    macOS app menu (Quit, About), Finder "open with", Dock icon
   LangIcon.java Glyph.java AppIcon.java   logos, small icons and the app icon, drawn in code
   FindReplaceDialog.java FontDialog.java Ui.java
 lib/        flatlaf-3.7.1.jar, flatlaf-intellij-themes-3.7.1.jar
@@ -113,18 +156,20 @@ docs/       screenshots
 - [ ] Maybe rename the package from `com.esisa.notepad` to something like `io.github.<user>.easynotes`
 - [ ] Translate menus or pick one language (today: English menus, French note texts)
 
-### 2. macOS version
-The code is plain Java, so most of it already runs on a Mac. What needs work:
-- [ ] **Shortcuts**: use **Cmd** instead of Ctrl (`Toolkit.getMenuShortcutKeyMaskEx()`) in `AppFrame` menus;
-      **Ctrl+Space** switches the keyboard input source on macOS, so offer another key for chapters/suggestions
-- [ ] **Title bar**: tabs-in-title-bar uses FlatLaf full window content; on macOS the window buttons are on the
-      left (FlatLaf supports this, the placeholder just has to move left)
-- [ ] **Settings folder**: `~/Library/Application Support/EasyNotes92` instead of `%APPDATA%` (`Settings.java`)
-- [ ] **Font**: Cascadia Code / Consolas don't exist by default: fall back to *SF Mono* or *Menlo* (`AppFrame.defaultFontFamily`)
-- [ ] **"Open folder"**: uses `explorer.exe /select`, use `open -R <file>` on macOS (`AppFrame.openContainingFolder`)
-- [ ] **Icon**: write an `.icns` (macOS) next to the `.ico` (`AppIcon.java`)
-- [ ] **Build**: `jpackage --type dmg` must run on a Mac; signing + notarization needs an Apple Developer account,
-      otherwise users must right-click → Open the first time
+### 2. macOS version (this repo)
+Everything that differs between Windows and macOS is in `Platform.java` and `MacIntegration.java`.
+- [x] **Shortcuts**: Cmd instead of Ctrl (`Platform.key`); ⌥Space as an extra key for suggestions
+- [x] **Title bar**: tabs in the title bar, red/yellow/green buttons on the left
+- [x] **Settings folder**: `~/Library/Application Support/EasyNotes92`
+- [x] **Font**: SF Mono / Menlo when Cascadia Code / Consolas are missing
+- [x] **"Open folder"**: `open -R` shows the file in Finder
+- [x] **App menu**: ⌘Q saves the session like closing the window, About opens the app's About, Dock icon
+- [x] **Finder**: files opened with EasyNotes92 from Finder open as tabs
+- [x] **Icon**: `.icns` generated from the same drawing (`AppIcon --iconset` + `iconutil`)
+- [x] **Build**: `build-mac.sh` (`jpackage --type dmg`), run by GitHub Actions on Apple Silicon and Intel
+- [ ] **Tested by a person on a real Mac** (the CI only starts it and takes a screenshot)
+- [ ] Signing + notarization (Apple Developer account, $99/year) to remove the first-launch warning
+- [ ] Mac App Store
 
 ### 3. Downloadable versions
 - [ ] Windows installer: `jpackage --type msi` (needs the WiX Toolset) or a zipped app folder (no install)
